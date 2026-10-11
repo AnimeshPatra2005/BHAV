@@ -1,0 +1,38 @@
+# secrets
+.env
+
+# python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# editor / tooling config, not part of the project
+.claude/
+.vscode/
+.idea/
+*.code-workspace
+
+# runtime + scratch
+uploads/
+photos/
+_slim.json
+last_response.json
+
+# test images and recordings
+image.png
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.heic
+*.mp4
+*.mov
+!static/**/*.svg
+
+# os
+Thumbs.db
+.DS_Store
+desktop.ini

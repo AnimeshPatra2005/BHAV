@@ -1,0 +1,187 @@
+{
+  "_meta": {
+    "demo_area": "Rohini / Shahbad Daulatpur, North-West Delhi (DTU area)",
+    "jurisdiction": "MCD",
+    "anchor_point": {
+      "lat": 28.7501,
+      "lon": 77.1177,
+      "label": "Delhi Technological University, Shahbad Daulatpur"
+    },
+    "WARNING": "Every entry below is a PLACEHOLDER SLOT, not a real record. phone and address are deliberately null. Nothing here is invented - fabricating plausible-looking numbers and addresses would put fake records in front of judges. Fill these in only after you have called and confirmed, then set verified to true.",
+    "how_to_fill": [
+      "1. MCD North-West zone office or the MCD 311 helpline for: bulky waste pickup, C&D collection point, your ward dry/wet collection schedule.",
+      "2. CPCB registered e-waste dismantler list for Delhi-NCR, then call two to ask whether they accept household drop-off or only bulk.",
+      "3. A nearby hospital reception for whether their medicine drop-box is live and accepts outside households.",
+      "4. Any local kabadiwala for current per-kg rates - these are the numbers in the routing table that move most.",
+      "5. One NGO for clothes and furniture collection, asking specifically whether they collect or only accept drop-off."
+    ],
+    "priority": "Verify lithium_cell, cfl_tube and cnd_debris first. Those are the three where a real ringing number most changes how the demo lands.",
+    "maps_note": "maps_query drives a Google Maps handoff in the UI. Curate real named facilities into name/address/phone/lat/lon as you verify them; until then the query at least puts the user in front of real places instead of an empty map."
+  },
+  "facilities": [
+    {
+      "id": "kabadiwala_local",
+      "name": "Local kabadiwala",
+      "serves_categories": [
+        "newspaper",
+        "cardboard",
+        "pet_bottle",
+        "iron_steel",
+        "aluminium",
+        "copper",
+        "glass_bottle"
+      ],
+      "type": "INFORMAL_BUYER",
+      "jurisdiction": "MCD",
+      "area": "Rohini",
+      "address": null,
+      "phone": null,
+      "lat": null,
+      "lon": null,
+      "authorised": false,
+      "verified": false,
+      "notes": "Informal sector buyer. Pays cash by weight. Not 'authorised' in the regulatory sense, and that is fine for non-hazardous streams - say so plainly in the UI rather than implying everything needs a licensed facility.",
+      "todo": "Find one near the anchor point. Ask current rates for newspaper, cardboard, PET, iron, aluminium.",
+      "maps_query": "kabadiwala scrap dealer near Rohini Delhi"
+    },
+    {
+      "id": "ewaste_authorised",
+      "name": "Authorised e-waste collection point",
+      "serves_categories": [
+        "lithium_cell",
+        "cfl_tube",
+        "led_bulb",
+        "mobile_phone",
+        "mixed_ewaste"
+      ],
+      "type": "AUTHORISED_RECYCLER",
+      "jurisdiction": "MCD",
+      "area": null,
+      "address": null,
+      "phone": null,
+      "lat": null,
+      "lon": null,
+      "authorised": true,
+      "verified": false,
+      "notes": "Must be CPCB-registered to be shown as authorised. The authorised flag is the whole point of this entry - do not set it true without checking the register.",
+      "todo": "PRIORITY. Pull the CPCB registered dismantler list for Delhi-NCR, pick the two nearest the anchor point, call both, ask: do you accept household drop-off, what are your hours, do you take CFL tubes.",
+      "maps_query": "authorised e-waste collection centre Rohini Delhi"
+    },
+    {
+      "id": "battery_takeback",
+      "name": "Battery take-back / registered recycler",
+      "serves_categories": [
+        "lead_acid_battery",
+        "lithium_cell"
+      ],
+      "type": "AUTHORISED_RECYCLER",
+      "jurisdiction": "MCD",
+      "area": null,
+      "address": null,
+      "phone": null,
+      "lat": null,
+      "lon": null,
+      "authorised": true,
+      "verified": false,
+      "notes": "For lead-acid, dealer take-back on replacement is the normal route and usually the safest. For lithium, a registered recycler is the only safe route.",
+      "todo": "PRIORITY. Call one inverter-battery dealer about exchange terms, and one registered recycler about lithium drop-off.",
+      "maps_query": "battery recycling centre Rohini Delhi"
+    },
+    {
+      "id": "mcd_cnd",
+      "name": "MCD construction and demolition waste collection point",
+      "serves_categories": [
+        "cnd_debris"
+      ],
+      "type": "MUNICIPAL",
+      "jurisdiction": "MCD",
+      "area": null,
+      "address": null,
+      "phone": null,
+      "lat": null,
+      "lon": null,
+      "authorised": true,
+      "verified": false,
+      "notes": "Delhi operates several C&D processing plants. Household-scale malba may or may not be accepted at the plant directly - there is often a ward-level collection point instead.",
+      "todo": "PRIORITY. Ask MCD North-West zone where a household takes a few sacks of malba, and whether there is a charge.",
+      "maps_query": "MCD construction debris collection point Rohini Delhi"
+    },
+    {
+      "id": "mcd_bulky",
+      "name": "MCD bulky waste pickup",
+      "serves_categories": [
+        "furniture"
+      ],
+      "type": "MUNICIPAL",
+      "jurisdiction": "MCD",
+      "area": null,
+      "address": null,
+      "phone": null,
+      "lat": null,
+      "lon": null,
+      "authorised": true,
+      "verified": false,
+      "notes": "Bulky items are excluded from normal door-to-door collection, which is why mattresses end up on roadsides.",
+      "todo": "Ask whether your zone runs a scheduled bulky-waste pickup or an on-request one.",
+      "maps_query": "MCD zonal office Rohini Delhi"
+    },
+    {
+      "id": "hospital_medicine_box",
+      "name": "Hospital medicine drop-box",
+      "serves_categories": [
+        "expired_medicine"
+      ],
+      "type": "VOLUNTARY_TAKEBACK",
+      "jurisdiction": "MCD",
+      "area": null,
+      "address": null,
+      "phone": null,
+      "lat": null,
+      "lon": null,
+      "authorised": true,
+      "verified": false,
+      "notes": "Voluntary. The hospital routes it into their bio-medical waste stream. No payment - this entry is carried entirely by the safety framing, so the UI must not show an empty price field here.",
+      "todo": "Call one hospital near the anchor point. Confirm the box exists, is live, and accepts medicine brought in from outside.",
+      "maps_query": "hospital Rohini Delhi"
+    },
+    {
+      "id": "ngo_textiles",
+      "name": "NGO - clothes and furniture",
+      "serves_categories": [
+        "old_clothes",
+        "furniture"
+      ],
+      "type": "NGO",
+      "jurisdiction": "MCD",
+      "area": null,
+      "address": null,
+      "phone": null,
+      "lat": null,
+      "lon": null,
+      "authorised": false,
+      "verified": false,
+      "notes": "Reuse beats recycling by a wide margin for both of these streams, so this facility outranks the scrap route when the item is still usable.",
+      "todo": "Find one operating in North-West Delhi. Ask whether they collect from the doorstep or accept drop-off only, and what condition they require.",
+      "maps_query": "NGO clothes donation centre Rohini Delhi"
+    },
+    {
+      "id": "ruco_oil",
+      "name": "RUCO used cooking oil collection",
+      "serves_categories": [
+        "used_cooking_oil"
+      ],
+      "type": "AUTHORISED_AGGREGATOR",
+      "jurisdiction": "MCD",
+      "area": null,
+      "address": null,
+      "phone": null,
+      "lat": null,
+      "lon": null,
+      "authorised": true,
+      "verified": false,
+      "notes": "FSSAI RUCO aggregators mostly serve restaurants. If household collection is genuinely unavailable, say that in the app instead of pointing users at a route that will turn them away.",
+      "todo": "Call one RUCO aggregator. Ask directly: do you collect from households, and is there a minimum quantity.",
+      "maps_query": "used cooking oil collection RUCO Delhi"
+    }
+  ]
+}

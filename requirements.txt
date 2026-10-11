@@ -1,0 +1,11 @@
+# AWS open source: the agent framework doing the orchestration.
+# The [gemini] extra pulls in the Gemini model provider.
+strands-agents[gemini]==1.59.0
+
+# web layer. Starlette rather than FastAPI because FastAPI 0.111 pins an older
+# starlette than strands-agents needs.
+starlette==1.7.0
+uvicorn==0.54.0
+python-multipart==0.0.32
+
+python-dotenv==1.2.4

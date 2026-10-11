@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bhav &middot; what are you holding?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home" href="/">bhav</a>
+    <span class="where">Delhi &middot; Rohini / DTU</span>
+  </div>
+
+  <section class="sec" style="padding-top:40px">
+    <p class="kicker">Try it</p>
+    <h2 class="big">What are you holding?</h2>
+
+    <label class="drop" id="drop" tabindex="0" style="margin-top:22px">
+      <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+        <path d="M3 9a2 2 0 0 1 2-2h2l1.2-2h7.6L17 7h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <circle cx="12" cy="13" r="3.6"/></svg>
+      <div class="drop-main">Photograph the thing you want to get rid of</div>
+      <div class="drop-sub">A battery, a wrapper, old clothes, pooja flowers &mdash; anything</div>
+      <input type="file" id="file" accept="image/*" capture="environment">
+    </label>
+
+    <div id="out"></div>
+  </section>
+
+  <footer>Bhav &middot; Strands Agents SDK &middot; Delhi</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const out = $("out"), drop = $("drop"), file = $("file");
+
+drop.addEventListener("keydown", e => {
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); file.click(); }
+});
+
+file.addEventListener("change", async () => {
+  const f = file.files[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  drop.style.display = "none";
+  out.innerHTML = `<img class="preview" src="${url}" alt="">
+    <div class="status"><span class="dots">Working it out</span></div>`;
+  const fd = new FormData();
+  fd.append("photo", f);
+  try {
+    const res = await fetch("/api/route", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Request failed");
+    render(url, data);
+  } catch (err) {
+    out.innerHTML = `<img class="preview" src="${url}" alt="">
+      <div class="err">${esc(err.message)}</div>${againBtn()}`;
+    wireAgain();
+  }
+});
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g,
+  c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const againBtn = () =>
+  `<p style="margin-top:20px"><button class="cta" id="again">Try another item</button></p>`;
+function wireAgain() {
+  const b = $("again");
+  if (b) b.onclick = () => {
+    file.value = ""; out.innerHTML = ""; drop.style.display = "block";
+    drop.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+}
+
+// The agent is told to answer in "- " bullets; fall back to sentences if it drifts.
+function toPoints(answer) {
+  const lines = String(answer || "").split("\n")
+    .map(l => l.trim().replace(/^[-*•]\s*/, "")).filter(Boolean);
+  if (lines.length > 1) return lines;
+  return String(answer || "").split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
+}
+
+// Pack tiles so every row sums to exactly 6 columns. Tiles are conditional -
+// no reuse route, no video, no facility - so fixed spans always left a ragged
+// gap somewhere. The last tile in a short row absorbs the remainder.
+function pack(tiles) {
+  const rows = [];
+  let row = [], w = 0;
+  for (const t of tiles) {
+    if (w + t.w > 6) { rows.push({ row, w }); row = []; w = 0; }
+    row.push(t); w += t.w;
+  }
+  if (row.length) rows.push({ row, w });
+  for (const r of rows) {
+    if (r.w < 6) r.row[r.row.length - 1].w += 6 - r.w;
+  }
+  return rows.flatMap(r => r.row)
+             .map(t => t.html.replace("__W__", "w" + t.w))
+             .join("");
+}
+
+function render(imgUrl, data) {
+  const c = data.card || {};
+  const danger = c.tone === "danger";
+  // Prefer the model's structured two-liner; fall back to parsing its prose.
+  const shortLines = (c.in_short && c.in_short.length)
+    ? c.in_short : toPoints(data.answer).slice(0, 2);
+  const shortList = shortLines.map(p => `<li>${esc(p)}</li>`).join("");
+  const sell = c.price && !c.no_monetary_value;
+
+  const moneyTile = `
+    <div class="tile __W__ ${sell ? "t-amber" : "t-cream"}">
+      <p class="tl">${sell ? "You can sell this" : "Nothing to earn"}</p>
+      <p class="money">${sell ? `₹${c.price.low}&ndash;${c.price.high}` : "₹0"}</p>
+      <p class="money-sub">${sell
+        ? (c.price.verified ? "Confirmed rate" : "Estimated rate")
+        : "No scrap market. The reason to bother is beside."}</p>
+    </div>`;
+
+  // The item's own reason, not a generic one - a reminder about batteries while
+  // you are looking at flowers is worse than no reminder.
+  const whyTile = (c.why_not_bin || c.hazard) ? `
+    <div class="tile __W__ t-orange"><p class="tl">Why not just bin it</p>
+      <p style="margin:0">${esc(c.why_not_bin || c.hazard)}</p></div>` : "";
+
+  const stepsTile = (c.steps && c.steps.length) ? `
+    <div class="tile __W__ t-cream">
+      <p class="tl">How to do it properly</p>
+      <ol class="steps">${c.steps.map((s, i) =>
+        `<li><span>${i + 1}</span>${esc(s)}</li>`).join("")}</ol></div>` : "";
+
+  // Only appears when the model judged this a technique worth watching.
+  const learnTile = c.learn ? `
+    <div class="tile __W__ t-brown"><p class="tl">Watch how</p>
+      <p style="margin:0 0 16px;opacity:.9">There is a knack to this one. Worth two
+        minutes of watching before you start.</p>
+      <a class="learn" href="${esc(c.learn)}" target="_blank" rel="noopener">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"
+          aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        <em>Watch on YouTube</em></a></div>` : "";
+
+  const f = (c.facilities || [])[0];
+  const mapsUrl = f && f.maps_query
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.maps_query)}`
+    : null;
+
+  const placeTile = f ? `
+    <div class="tile __W__ t-cream"><p class="tl">Where to take it</p>
+      <p style="margin:0 0 2px;font-weight:700;font-size:16px">${esc(f.name)}
+        ${f.authorised ? '<span class="badge ok">authorised</span>' : ""}</p>
+      ${f.phone ? `<p style="margin:6px 0 0"><a href="tel:${esc(f.phone)}">${esc(f.phone)}</a></p>` : ""}
+      ${mapsUrl ? `<a class="maps" href="${mapsUrl}" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/>
+          <circle cx="12" cy="10" r="3"/></svg>
+        Find these on Google Maps</a>` : ""}
+    </div>` : "";
+
+  const reuseTile = c.reuse ? `
+    <div class="tile __W__ t-amber">
+      <p class="tl">${c.reuse.is_primary_route ? "Better than binning it" : "Reuse"}</p>
+      <p style="margin:0;font-size:15px">${esc(c.reuse.note)}</p></div>` : "";
+
+  const whereTile = c.destination ? `
+    <div class="tile __W__ t-brown"><p class="tl">The route</p>
+      <p style="margin:0">${esc(c.destination)}</p></div>` : "";
+
+  const trace = (data.trace || []).filter(t => t.kind === "call").map(t =>
+    `<div class="step"><b>${esc(t.name)}</b><span>${esc(JSON.stringify(t.input))}</span></div>`
+  ).join("");
+
+  const verdictTile = `
+      <div class="tile __W__ ${danger ? "t-orange" : "t-brown"}">
+        <p class="tl">Verdict</p>
+        <p class="verdict">${esc(c.route_verb || "")}</p>
+        <p class="item">${esc(c.item || "Unidentified")}</p>
+        <p class="seen">${esc(c.visible_label || "")}${
+          c.confidence != null ? ` &middot; ${Math.round(c.confidence*100)}% sure` : ""}</p>
+        ${shortList ? `<ul class="points" style="margin-top:14px">${shortList}</ul>` : ""}
+      </div>`;
+
+  const traceTile = `
+      <details class="trace __W__ t-cream">
+        <summary>How Bhav worked this out</summary>
+        <div class="trace-body">
+          ${trace || '<div class="step">No tool calls recorded.</div>'}
+          <p class="meta">Strands Agents SDK &middot; ${esc(c.model_used || "gemini")}</p>
+        </div>
+      </details>`;
+
+  // preferred widths; pack() expands the last tile of any short row to fill it
+  const layout = [
+    { w: 4, html: verdictTile },
+    { w: 2, html: moneyTile },
+    whyTile   ? { w: 3, html: whyTile }   : null,
+    learnTile ? { w: 3, html: learnTile } : null,
+    stepsTile ? { w: 6, html: stepsTile } : null,
+    whereTile ? { w: 3, html: whereTile } : null,
+    placeTile ? { w: 3, html: placeTile } : null,
+    reuseTile ? { w: 6, html: reuseTile } : null,
+    { w: 6, html: traceTile },
+  ].filter(Boolean);
+
+  out.innerHTML = `
+    <img class="preview" src="${imgUrl}" alt="">
+    <div class="bento">${pack(layout)}</div>
+    ${againBtn()}`;
+  wireAgain();
+}
+</script>
+</body>
+</html>

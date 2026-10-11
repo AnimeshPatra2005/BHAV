@@ -1,0 +1,186 @@
+/* Bhav - shared styles for the landing page and the app page. */
+
+:root {
+  --cream:  #FDF0E0;
+  --amber:  #F2AC50;
+  --orange: #D45F20;
+  --brown:  #2B1A0F;
+  --gold:   #F5C95C;
+
+  --bg: var(--cream);
+  --surface: #FFFFFF;
+  --ink: var(--brown);
+  --muted: #8A7260;
+  --line: #EBDCC8;
+  --danger: #B3321A;
+  --danger-bg: #FBE7DF;
+  --good: #2F7D4F;
+  --good-bg: #E9F4EC;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1A100A; --surface: #241710; --ink: var(--cream);
+    --muted: #B59C86; --line: #3A281C;
+    --danger: #F0846A; --danger-bg: #351B14;
+    --good: #7BC79B; --good-bg: #16281E;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1A100A; --surface: #241710; --ink: var(--cream);
+  --muted: #B59C86; --line: #3A281C;
+  --danger: #F0846A; --danger-bg: #351B14;
+  --good: #7BC79B; --good-bg: #16281E;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.55 "Baloo 2", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased; overflow-x: hidden;
+}
+
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 16px; }
+.sec { padding: 76px 0; }
+.kicker { font-size: 12px; font-weight: 700; letter-spacing: .14em;
+          text-transform: uppercase; color: var(--orange); margin: 0 0 10px; }
+h2.big { font-size: clamp(27px, 5vw, 42px); font-weight: 800; letter-spacing: -.02em;
+         margin: 0 0 14px; line-height: 1.12; }
+.lede { color: var(--muted); max-width: 56ch; margin: 0; font-size: 17px; }
+
+.cta { display: inline-block; background: var(--orange); color: #fff; font-weight: 700;
+       padding: 15px 32px; border-radius: 999px; text-decoration: none; font-size: 17px;
+       border: none; cursor: pointer; font-family: inherit;
+       transition: transform .12s, background .12s; }
+.cta:hover { background: var(--brown); transform: translateY(-1px); }
+.cta.ghost { background: transparent; color: var(--orange);
+             box-shadow: inset 0 0 0 2px var(--orange); }
+.cta.ghost:hover { background: var(--orange); color: #fff; }
+
+/* ---------------- app page ---------------- */
+.topbar { display: flex; align-items: center; justify-content: space-between;
+          padding: 18px 0; border-bottom: 1px solid var(--line); }
+.topbar a.home { font-weight: 800; font-size: 22px; color: var(--ink);
+                 text-decoration: none; letter-spacing: -.02em; }
+.topbar .where { font-size: 13px; color: var(--muted); }
+
+.drop { display: block; width: 100%; border: 2px dashed var(--amber);
+        background: var(--surface); border-radius: 20px; padding: 48px 20px;
+        text-align: center; cursor: pointer; transition: border-color .15s; }
+.drop:hover, .drop:focus-visible { border-color: var(--orange); outline: none; }
+.drop-main { font-weight: 700; margin-top: 12px; font-size: 18px; }
+.drop-sub { color: var(--muted); font-size: 13px; margin-top: 5px; }
+input[type=file] { display: none; }
+
+.preview { width: 100%; max-height: 300px; object-fit: cover; border-radius: 16px;
+           border: 1px solid var(--line); display: block; }
+.status { text-align: center; color: var(--muted); padding: 30px 0; font-size: 14px; }
+.dots::after { content: ""; animation: dots 1.2s steps(4,end) infinite; }
+@keyframes dots { 0%{content:""} 25%{content:"."} 50%{content:".."} 75%{content:"..."} }
+
+/* ---------------- bento ----------------
+   Six columns so tiles can be genuinely square (span 2 wide x 2 rows at a
+   ~158px row height) rather than everything landing as a wide rectangle. */
+.bento { display: grid; gap: 14px; margin-top: 22px;
+         grid-template-columns: 1fr; grid-auto-rows: minmax(0, auto); }
+@media (min-width: 760px) {
+  /* No `dense`: it reorders tiles and the sequence here is the argument.
+     Widths are packed in JS so every row sums to exactly 6 - leftover columns
+     are what made this look haphazard. */
+  .bento { grid-template-columns: repeat(6, 1fr); grid-auto-rows: minmax(120px, auto); }
+  .w1 { grid-column: span 1; } .w2 { grid-column: span 2; }
+  .w3 { grid-column: span 3; } .w4 { grid-column: span 4; }
+  .w5 { grid-column: span 5; } .w6 { grid-column: span 6; }
+}
+
+.tile { border-radius: 20px; padding: 24px; border: 1px solid transparent;
+        display: flex; flex-direction: column; font-size: 16px; line-height: 1.55; }
+.tile p:last-child { margin-bottom: 0; }
+.tile .tl { font-size: 11px; font-weight: 700; letter-spacing: .12em;
+            text-transform: uppercase; margin: 0 0 12px; opacity: .72; }
+
+/* Solid palette fills. Deliberately fixed, not theme-derived - these are the
+   brand colours and should read the same in light and dark. */
+.t-cream  { background: var(--cream);  color: #3A2415; }
+.t-amber  { background: var(--amber);  color: #42280F; }
+.t-orange { background: var(--orange); color: #FFF4E8; }
+.t-brown  { background: var(--brown);  color: var(--cream); }
+.t-cream .tl  { color: #8A6A4B; opacity: 1; }
+.t-amber .tl  { color: #7A4A17; opacity: 1; }
+.t-orange .tl { color: #FFDCBF; opacity: 1; }
+.t-brown .tl  { color: var(--amber); opacity: 1; }
+.t-brown a, .t-orange a { color: inherit; }
+
+.verdict { font-size: clamp(23px, 5vw, 33px); font-weight: 800; letter-spacing: -.02em;
+           margin: 0 0 6px; line-height: 1.1; }
+.item { font-size: 17px; font-weight: 600; margin: 0; }
+.seen { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
+.money { font-size: clamp(40px, 10vw, 62px); font-weight: 800; letter-spacing: -.035em;
+         line-height: 1; margin: 0 0 10px; }
+.money-sub { font-size: 13px; margin: 0; opacity: .85; }
+
+/* the standing reminder tile */
+.reminder { font-size: 15px; line-height: 1.55; margin: 0; }
+.reminder b { font-weight: 700; }
+
+ul.points { margin: 0; padding-left: 0; list-style: none; }
+ul.points li { position: relative; padding-left: 21px; margin-bottom: 9px; font-size: 16px; }
+ul.points li:last-child { margin-bottom: 0; }
+ul.points li::before { content: ""; position: absolute; left: 0; top: .6em;
+  width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .5; }
+
+/* numbered how-to steps */
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; }
+ol.steps li { position: relative; padding-left: 38px; margin-bottom: 14px;
+              font-size: 16px; line-height: 1.5; counter-increment: s; }
+ol.steps li:last-child { margin-bottom: 0; }
+ol.steps li::before {
+  content: counter(s); position: absolute; left: 0; top: -1px;
+  width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 13px; font-weight: 800; background: currentColor; color: transparent;
+  box-shadow: inset 0 0 0 26px currentColor;
+}
+ol.steps li span { position: absolute; left: 0; top: -1px; width: 26px; height: 26px;
+  display: grid; place-items: center; font-size: 13px; font-weight: 800; }
+.t-cream ol.steps li span { color: var(--cream); }
+.t-amber ol.steps li span { color: var(--amber); }
+.t-orange ol.steps li span { color: var(--orange); }
+.t-brown ol.steps li span { color: var(--brown); }
+
+.learn { display: inline-flex; align-items: center; gap: 9px; margin-top: auto;
+         background: currentColor; border-radius: 12px; padding: 12px 18px;
+         text-decoration: none; font-weight: 700; font-size: 15px; }
+.learn em { font-style: normal; }
+.t-cream .learn em { color: var(--cream); } .t-cream .learn svg { color: var(--cream); }
+.t-amber .learn em { color: var(--amber); } .t-amber .learn svg { color: var(--amber); }
+.t-brown .learn em { color: var(--brown); } .t-brown .learn svg { color: var(--brown); }
+
+.badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 9px;
+         border-radius: 999px; letter-spacing: .04em; text-transform: uppercase;
+         vertical-align: middle; margin-left: 6px; }
+.badge.ok { background: var(--good-bg); color: var(--good); border: 1px solid var(--good); }
+.badge.un { background: #FFF4DF; color: #9A6212; border: 1px solid var(--amber); }
+
+.maps { display: inline-flex; align-items: center; gap: 7px; margin-top: 11px;
+        background: var(--brown); color: var(--cream); text-decoration: none;
+        padding: 11px 17px; border-radius: 11px; font-size: 14px; font-weight: 700; }
+.maps:hover { background: var(--orange); }
+
+/* No background/border here: the .t-* palette class on the element supplies
+   them, and an element+class selector would otherwise out-specify it. Also not
+   given .tile, whose flex column breaks summary/body layout. */
+/* collapsed, this should be a strip - not stretched to a grid row minimum */
+details.trace { border-radius: 20px; align-self: start; }
+details.trace > summary { cursor: pointer; padding: 16px 20px; font-size: 13px;
+                          font-weight: 700; list-style: none; }
+details.trace > summary::-webkit-details-marker { display: none; }
+details.trace > summary::before { content: "▸ "; color: var(--orange); }
+details.trace[open] > summary::before { content: "▾ "; }
+.trace-body { padding: 0 20px 16px; }
+.step { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+        padding: 8px 0; border-top: 1px solid var(--line); }
+.step b { color: var(--orange); }
+.step span { color: var(--muted); display: block; margin-top: 3px;
+             white-space: pre-wrap; word-break: break-word; }
+.meta { font-size: 11px; color: var(--muted); margin-top: 14px; text-align: center; }
+.err { color: var(--danger); text-align: center; padding: 22px; }
+footer { padding: 40px 0 60px; text-align: center; color: var(--muted); font-size: 12px; }

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bhav</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/app.css">
+<style>
+  /* ============ hero: one continuous scroll sequence ============
+     Word, bin, coins and the three tiles all live in ONE sticky stage so the
+     coins can travel into the tiles with no cross-section position maths. */
+  .hero { height: 520vh; position: relative; background: var(--orange); }
+  .stage { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+  .stage-inner { position: relative; width: 100%; height: 100%; }
+
+  /* The clip's bottom edge is set from the bin's MEASURED mouth every frame, so
+     the word is swallowed exactly at the rim instead of dissolving in mid-air.
+     The perspective here is what warps the word as it dives in. */
+  .word-clip {
+    position: absolute; left: 0; right: 0; top: 0; z-index: 3;
+    height: 50%;                      /* placeholder - JS measures the real value */
+    overflow: hidden; pointer-events: none;
+    perspective: 620px; perspective-origin: 50% 100%;
+  }
+  .word {
+    position: absolute; left: 0; right: 0; bottom: 0; margin: 0; text-align: center;
+    color: var(--brown); font-weight: 800; font-size: clamp(96px, 26vw, 240px);
+    line-height: .82; letter-spacing: -.04em; white-space: nowrap;
+    transform-origin: 50% 100%; will-change: transform;
+  }
+
+  /* 40% centres the word+bin group: the word sits above the mouth, so the bin
+     itself has to hang below centre for the pair to read as balanced. Still
+     leaves roughly the bottom third clear for the coins to fall into. */
+  .bin { position: absolute; left: 50%; top: 40%; width: clamp(130px, 27vw, 190px);
+         transform: translateX(-50%); z-index: 4; will-change: transform, opacity; }
+  .bin svg { width: 100%; display: block; overflow: visible; }
+
+  .coin { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px;
+          margin: -27px 0 0 -27px; opacity: 0; z-index: 6;
+          perspective: 420px;        /* gives the flip real depth, not a flat squash */
+          will-change: transform, opacity; }
+  .coin svg { width: 100%; display: block; }
+  /* Spins about the vertical axis, like a coin stood on its edge. The inner svg
+     spins so it does not fight the positioning transform on .coin. */
+  .coin.spin svg { animation: coinspin 3.2s linear infinite; }
+  @keyframes coinspin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+
+  .tiles { position: absolute; left: 0; right: 0; top: 50%; z-index: 2;
+           transform: translateY(-50%); display: grid; gap: 16px; padding: 0 20px;
+           max-width: 1040px; margin: 0 auto; grid-template-columns: 1fr; opacity: 0; }
+  @media (min-width: 760px) { .tiles { grid-template-columns: repeat(3, 1fr); } }
+  .ptile { background: var(--cream); border-radius: 20px; padding: 22px 20px 20px;
+           will-change: transform, opacity; }
+  /* No background: the slot only reserves the space the coin lands in. A grey
+     disc behind a gold coin just looks like a loading state. */
+  .ptile .slot { width: 54px; height: 54px; margin-bottom: 14px; }
+  .ptile h3 { margin: 0 0 7px; font-size: 18px; font-weight: 700; color: var(--brown); }
+  .ptile p { margin: 0; font-size: 14px; line-height: 1.5; color: #6B5443; }
+
+  .scrollcue { position: absolute; left: 0; right: 0; bottom: 26px; text-align: center;
+               color: #FCE3C6; font-size: 12px; letter-spacing: .14em;
+               text-transform: uppercase; z-index: 7; }
+
+  .band { background: var(--bg); position: relative; z-index: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero { height: 100vh; }
+    .word-clip { height: 38%; clip-path: none; }
+    .bin, .coin { display: none; }
+    .tiles { opacity: 1 !important; top: auto; bottom: 5%; transform: none; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <radialGradient id="coinGrad" cx="38%" cy="30%" r="75%">
+    <stop offset="0" stop-color="#FFE7A8"/>
+    <stop offset="58%" stop-color="#F5C95C"/>
+    <stop offset="100%" stop-color="#DE9A2A"/>
+  </radialGradient>
+</defs></svg>
+
+<section class="hero" id="hero">
+  <div class="stage">
+    <div class="stage-inner" id="stage">
+
+      <div class="word-clip" id="wordClip">
+        <h1 class="word" id="word">bhav</h1>
+      </div>
+
+      <div class="bin" id="bin">
+        <svg viewBox="0 0 120 150" aria-hidden="true">
+          <path d="M26 34h68l-7 102a9 9 0 0 1-9 8H42a9 9 0 0 1-9-8z" fill="#F58220"/>
+          <g stroke="#D45F20" stroke-width="5" stroke-linecap="round">
+            <line x1="47" y1="54" x2="47" y2="124"/>
+            <line x1="60" y1="54" x2="60" y2="124"/>
+            <line x1="73" y1="54" x2="73" y2="124"/>
+          </g>
+          <g id="lid">
+            <rect x="46" y="2" width="28" height="9" rx="4.5" fill="none"
+                  stroke="#F58220" stroke-width="7"/>
+            <rect x="16" y="14" width="88" height="14" rx="7" fill="#F58220"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="coin" data-i="0"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="url(#coinGrad)" stroke="#C8821E" stroke-width="2"/><circle cx="24" cy="24" r="15" fill="none" stroke="#E2AC42" stroke-width="2"/><path d="M20 17h8M24 17v14M20 31h8" stroke="#C8821E" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="coin" data-i="1"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="url(#coinGrad)" stroke="#C8821E" stroke-width="2"/><circle cx="24" cy="24" r="15" fill="none" stroke="#E2AC42" stroke-width="2"/><path d="M20 17h8M24 17v14M20 31h8" stroke="#C8821E" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="coin" data-i="2"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="url(#coinGrad)" stroke="#C8821E" stroke-width="2"/><circle cx="24" cy="24" r="15" fill="none" stroke="#E2AC42" stroke-width="2"/><path d="M20 17h8M24 17v14M20 31h8" stroke="#C8821E" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div>
+
+      <div class="tiles" id="tiles">
+        <div class="ptile"><div class="slot"></div>
+          <h3>What is it worth</h3>
+          <p>Bhav names the item and tells you what a scrap dealer pays per kilo
+             &mdash; or says plainly there is no money in it.</p></div>
+        <div class="ptile"><div class="slot"></div>
+          <h3>Where it actually goes</h3>
+          <p>Four routes, not two. Ten of twenty-two common household items must
+             not be binned at all.</p></div>
+        <div class="ptile"><div class="slot"></div>
+          <h3>Only what we verified</h3>
+          <p>Ask a chatbot where to drop a CFL tube and it invents an address.
+             Bhav says &ldquo;not yet confirmed&rdquo; instead.</p></div>
+      </div>
+
+      <p class="scrollcue" id="cue">scroll</p>
+    </div>
+  </div>
+</section>
+
+<div class="band">
+<section class="sec wrap">
+  <p class="kicker">क्या भाव?</p>
+  <h2 class="big">Every Delhi household already sorts waste.<br>Just not for the planet.</h2>
+  <p class="lede">Newspaper, bottles, scrap metal &mdash; people separate these without being
+  asked, because the kabadiwala pays. Bhav extends that habit to everything else:
+  the battery that starts truck fires, the medicine nobody takes back, the wrapper
+  that no one will ever buy.</p>
+  <p style="margin-top:32px"><a class="cta" href="/try">Try it &rarr;</a></p>
+</section>
+<footer class="wrap">Bhav &middot; Strands Agents SDK &middot; Delhi</footer>
+</div>
+
+<script>
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const hero = document.getElementById("hero");
+const stage = document.getElementById("stage");
+const word = document.getElementById("word");
+const wordClip = document.getElementById("wordClip");
+const bin = document.getElementById("bin");
+const lid = document.getElementById("lid");
+const cue = document.getElementById("cue");
+const tiles = document.getElementById("tiles");
+const coins = [...document.querySelectorAll(".coin")];
+const ptiles = [...document.querySelectorAll(".ptile")];
+
+const clamp = (v,a,b) => Math.min(b, Math.max(a,v));
+const span_ = (p,a,b) => clamp((p-a)/(b-a), 0, 1);
+const easeOut = t => 1 - Math.pow(1-t, 3);
+const easeIn = t => t*t;
+
+const P = {
+  lidOpen: [0.00, 0.10],
+  wordIn:  [0.06, 0.36],
+  lidShut: [0.36, 0.44],
+  drop:    [0.45, 0.66],   // longer, so the coins emerging is readable
+  travel:  [0.68, 0.88],   // starts only after the drop has finished
+  binGo:   [0.68, 0.84],
+  tilesIn: [0.74, 0.92],
+};
+
+function frame() {
+  if (reduce) return;
+  const h = hero.offsetHeight - window.innerHeight;
+  const p = clamp(-hero.getBoundingClientRect().top / h, 0, 1);
+
+  // lid swings open on its left hinge, then shuts once the word is inside
+  const open = easeOut(span_(p, ...P.lidOpen)) - easeIn(span_(p, ...P.lidShut));
+  lid.setAttribute("transform", `rotate(${-64 * open} 18 21)`);
+
+  // Measure the bin's mouth. In the 0 0 120 150 viewBox the body opening runs
+  // x=26..94 at y=34, so the mouth is 68/120 of the bin's width.
+  const binRect = bin.getBoundingClientRect();
+  const stageRect = stage.getBoundingClientRect();
+  const mouthY = binRect.top + binRect.height * (34 / 150) - stageRect.top;
+  const mouthHalf = binRect.width * (68 / 120) / 2;
+  const mouthMid = binRect.left + binRect.width / 2 - stageRect.left;
+  const mouthL = mouthMid - mouthHalf;
+  const mouthR = mouthMid + mouthHalf;
+
+  // The clip is a FUNNEL, not a rectangle. Full width at the top, sloping in to
+  // exactly the mouth width at the bottom. A straight full-width edge is what
+  // made the word look like it was sliding behind a panel - the opening it goes
+  // into has to be as narrow as the bin itself.
+  wordClip.style.height = mouthY + "px";
+  const taper = mouthY * 0.38;
+  wordClip.style.clipPath =
+    `polygon(0 0, 100% 0, 100% ${taper}px, ${mouthR}px 100%, ${mouthL}px 100%, 0 ${taper}px)`;
+
+  // Perspective keystone + horizontal squeeze, so the word narrows toward the
+  // mouth at the same rate the funnel does.
+  const wi = easeIn(span_(p, ...P.wordIn));
+  word.style.transform =
+    `translateY(${wi * 26}vh) rotateX(${wi * 74}deg) ` +
+    `scaleX(${1 - wi * 0.58}) scaleY(${1 - wi * 0.14})`;
+  cue.style.opacity = String(1 - span_(p, 0, 0.12));
+
+  // bin judders as the lid shuts, then recedes
+  const shakeT = span_(p, 0.36, 0.50);
+  const shake = Math.sin(shakeT * Math.PI * 6) * (1 - shakeT) * 8;
+  const gone = easeIn(span_(p, ...P.binGo));
+  bin.style.transform =
+    `translateX(-50%) translateX(${shake}px) translateY(${-gone*24}vh) scale(${1-gone*0.75})`;
+  bin.style.opacity = String(1 - gone);
+
+  // coins fall out of the BOTTOM of the bin, then travel to their tile slots
+  const binBox = bin.getBoundingClientRect();
+  const stageBox = stageRect;
+  const cx = stage.offsetWidth / 2, cy = stage.offsetHeight / 2;
+  const originX = binBox.left + binBox.width/2 - stageBox.left - cx;
+  const originY = binBox.bottom - stageBox.top - cy;
+
+  coins.forEach((c, i) => {
+    const d = easeOut(span_(p, P.drop[0] + i*0.045, P.drop[1] + i*0.045));
+    const t = easeOut(span_(p, P.travel[0] + i*0.03, P.travel[1]));
+
+    // Longer fall into the empty space under the bin, so the coins are clearly
+    // seen coming out rather than appearing and immediately flying off.
+    const fx = originX + (i - 1) * 64 * d;
+    const fy = originY + d * 170;
+
+    const slot = ptiles[i].querySelector(".slot").getBoundingClientRect();
+    const tx = slot.left + slot.width/2 - stageBox.left - cx;
+    const ty = slot.top + slot.height/2 - stageBox.top - cy;
+
+    const x = fx + (tx - fx) * t;
+    const y = fy + (ty - fy) * t;
+
+    // Tumble while falling, then unwind back to upright as it settles - a
+    // leftover z-rotation would leave the spin axis tilted instead of vertical.
+    const tumble = (d * 300 + t * 140) * (1 - t);
+
+    c.style.opacity = String(d);
+    c.style.transform = `translate(${x}px, ${y}px) rotate(${tumble}deg)`;
+    c.classList.toggle("spin", t > 0.985);
+  });
+
+  // tiles rise in beneath the arriving coins
+  const ti = easeOut(span_(p, ...P.tilesIn));
+  tiles.style.opacity = String(ti);
+  ptiles.forEach((el, i) => {
+    const s = easeOut(span_(p, P.tilesIn[0] + i*0.03, P.tilesIn[1]));
+    el.style.transform = `translateY(${(1-s) * 28}px)`;
+  });
+}
+
+let ticking = false;
+addEventListener("scroll", () => {
+  if (ticking) return;
+  ticking = true;
+  requestAnimationFrame(() => { frame(); ticking = false; });
+}, { passive: true });
+addEventListener("resize", frame);
+addEventListener("load", frame);
+document.fonts && document.fonts.ready.then(frame);
+frame();
+</script>
+</body>
+</html>
